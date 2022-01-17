@@ -1,0 +1,79 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xsystem.cnp.example.org
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: cnp.example.org/v1alpha1
+    kind: XSystem
+  resources:
+    - name: styra-system
+      base:
+        apiVersion: styra.crossplane.io/v1alpha1
+        kind: System
+        metadata:
+          name: # patched
+        spec:
+          forProvider:
+            name: # patched
+            type: kubernetes:v2
+          writeConnectionSecretToRef:
+            namespace: crossplane-system
+            name: # patched
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.name
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - fromFieldPath: metadata.name
+          toFieldPath: "spec.writeConnectionSecretToRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-styra"
+    - name: kube-system-namespace
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          deletionPolicy: Orphan
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: kube-system
+                labels:
+                  openpolicyagent.org/webhook: ignore
+    - name: styra-helm-release
+      base:
+        apiVersion: helm.crossplane.io/v1beta1
+        kind: Release
+        spec:
+          rollbackLimit: 3
+          forProvider:
+            namespace: styra-system
+            chart:
+              name: styra-k8s-system
+              repository: http://chartmuseum.chartmuseum.svc:8080/
+              version: "0.5.5"
+            valuesFrom:
+              - secretKeyRef:
+                  name: # patched
+                  namespace: crossplane-system
+                  key: helmValues
+                  optional: false
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: "spec.forProvider.valuesFrom[0].secretKeyRef.name"
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-styra"
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-styra-k8s-system"

@@ -1,0 +1,5 @@
+apiVersion: cnp.example.org/v1alpha1
+kind: XSystem
+metadata:
+  name: system-1
+spec: {}

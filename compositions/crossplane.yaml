@@ -1,0 +1,19 @@
+apiVersion: meta.pkg.crossplane.io/v1alpha1
+kind: Configuration
+metadata:
+  name: policy-platform-ref
+  annotations:
+    meta.crossplane.io/maintainer: Jan Willies <jan.willies@accenture.com>
+    meta.crossplane.io/keywords: opa, styra, gitlab, cloud-native, kubernetes, example, platform, reference
+spec:
+  crossplane:
+    version: ">=v1.6.0-0"
+  dependsOn:
+    - provider: crossplane/provider-kubernetes
+      version: main
+    - provider: crossplane/provider-helm
+      version: ">=v0.9.0"
+    - provider: crossplane/provider-styra
+      version: ">=v0.1.0"
+    - provider: crossplane/provider-gitlab
+      version: ">=v0.1.0"

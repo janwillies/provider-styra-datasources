@@ -1,0 +1,8 @@
+apiVersion: cnp.example.org/v1alpha1
+kind: XLibrary
+metadata:
+  name: team-1
+spec:
+  parameters:
+    gitlab:
+      projectId: 32106264

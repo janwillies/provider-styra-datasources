@@ -1,0 +1,90 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xlibrary.cnp.example.org
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: cnp.example.org/v1alpha1
+    kind: XLibrary
+  resources:
+    - name: gitlab-deploy-token
+      base:
+        apiVersion: projects.gitlab.crossplane.io/v1alpha1
+        kind: DeployToken
+        spec:
+          forProvider:
+            projectId: # patched
+            scopes:
+              - "read_repository"
+          writeConnectionSecretToRef:
+            name: # patched
+            namespace: crossplane-system
+      patches:
+        - fromFieldPath: metadata.uid
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "gitlab-deploy-token-%s"
+        - fromFieldPath: metadata.uid
+          toFieldPath: metadata.name
+        - fromFieldPath: spec.parameters.gitlab.projectId
+          toFieldPath: spec.forProvider.projectId
+        - type: ToCompositeFieldPath
+          fromFieldPath: spec.forProvider.username
+          toFieldPath: status.gitlab.username
+    - name: styra-secret
+      base:
+        apiVersion: styra.crossplane.io/v1alpha1
+        kind: Secret
+        spec:
+          forProvider:
+            name: # patched
+            description: "gitops"
+            secretRef:
+              name: # patched
+              namespace: crossplane-system
+              key: token
+      patches:
+        - fromFieldPath: metadata.uid
+          toFieldPath: spec.forProvider.secretRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "gitlab-deploy-token-%s"
+        - fromFieldPath: status.gitlab.username
+          toFieldPath: spec.forProvider.name
+          policy:
+            fromFieldPath: Required
+        - fromFieldPath: metadata.uid
+          toFieldPath: metadata.name
+    - name: styra-datasource
+      base:
+        apiVersion: styra.crossplane.io/v1alpha1
+        kind: DataSource
+        spec:
+          forProvider:
+            category: git/rego
+            type: pull
+            onPremises: false
+            gitRego:
+              url: "https://gitlab.com/janwillies/opa-gitops.git"
+              path: "/global"
+              reference: "refs/heads/main"
+              credentials: # patched
+      patches:
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-global"
+        - fromFieldPath: metadata.name
+          toFieldPath: metadata.annotations[crossplane.io/external-name]
+          transforms:
+            - type: string
+              string:
+                fmt: "global/%s"
+        - fromFieldPath: metadata.uid
+          toFieldPath: spec.forProvider.gitRego.credentials

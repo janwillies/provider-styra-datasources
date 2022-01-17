@@ -1,0 +1,41 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xlibrary.cnp.example.org
+spec:
+  group: cnp.example.org
+  names:
+    kind: XLibrary
+    plural: xlibraries
+  claimNames:
+    kind: Library
+    plural: libraries
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              parameters:
+                type: object
+                properties:
+                  gitlab:
+                    type: object
+                    properties:
+                      projectId:
+                        type: integer
+                        description: ID of this gitlab project (e.g. 32106264)
+          status:
+            type: object
+            properties:
+              gitlab:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    description: Generated username of the deploy token
